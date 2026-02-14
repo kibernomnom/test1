@@ -202,11 +202,11 @@
 
           <div class="glass stat reveal">
             <div class="photo">
-              <!-- featured photo: use 1.jpg because you don't have featured.jpg -->
+              <!-- featured: у тебя в репо нет featured.jpg, поэтому ставим 1.jpg -->
               <img id="featuredImg" alt="Featured romantic photo" src="1.jpg">
             </div>
             <strong id="featuredTitle">Our little universe</strong>
-            <p class="subtitle" id="featuredSub">Replace this with your favorite photo and caption.</p>
+            <p class="subtitle" id="featuredSub">This is our favorite photo 💗</p>
           </div>
         </aside>
       </div>
@@ -294,11 +294,15 @@
   (() => {
     'use strict';
 
-    // CONFIG: fully matching your repo files (root):
-    // 1.jpg 2.jpg 3.jpg 4.jpeg 5.jpeg 6.jpeg
+    // =========================
+    // CONFIG: под твои файлы в ROOT (как у тебя сейчас)
+    // =========================
     const CONFIG = {
       names: { from: 'Alex', to: 'Sofia' },
       specialDate: '2025-09-22T18:27:00',
+
+      // ВАЖНО: targetDate не ставим строкой "2026-09-22...", а делаем умно:
+      // ближайший 22 сентября (если уже прошло — следующий год).
       targetDate: null,
 
       copy: {
@@ -315,6 +319,7 @@
         ]
       },
 
+      // ТВОИ ФАЙЛЫ: 1.jpg 2.jpg 3.jpg 4.jpeg 5.jpeg 6.jpeg (в корне репо)
       gallery: [
         { src:'1.jpg', title:'Photo 1', desc:'Our moment.' },
         { src:'2.jpg', title:'Photo 2', desc:'Our moment.' },
@@ -445,12 +450,23 @@
       dom.reasonsGrid.append(frag);
     };
 
+    // =========================
+    // COUNTDOWN: БЛИЖАЙШИЙ 22 СЕНТЯБРЯ
+    // =========================
     const resolveCountdownTarget = () => {
       if (CONFIG.targetDate) return new Date(CONFIG.targetDate).getTime();
+
       const now = new Date();
       const year = now.getFullYear();
-      const feb14ThisYear = new Date(year, 1, 14, 0, 0, 0, 0);
-      const target = now > feb14ThisYear ? new Date(year + 1, 1, 14, 0, 0, 0, 0) : feb14ThisYear;
+
+      // 22 сентября 00:00 текущего года
+      const sep22ThisYear = new Date(year, 8, 22, 0, 0, 0, 0); // 8 = September (0-based)
+
+      // если уже прошло — берём следующий год
+      const target = now > sep22ThisYear
+        ? new Date(year + 1, 8, 22, 0, 0, 0, 0)
+        : sep22ThisYear;
+
       return target.getTime();
     };
 
@@ -576,25 +592,72 @@
       window.addEventListener('beforeunload', () => cancelAnimationFrame(raf), { once:true });
     };
 
+    // =========================
+    // MUSIC: Romantic Jazz (chords)
+    // =========================
     const audio = (() => {
-      let ctx = null, playing = false;
+      let ctx = null;
+      let playing = false;
+      let interval = null;
       let heartbeatEnabled = true;
+
       const getCtx = () => ctx || (ctx = new (window.AudioContext || window.webkitAudioContext)());
-      const beep = (freq=440, dur=.11, type='sine', gain=.06) => {
+
+      const playNote = (freq, duration = 0.55, type = 'triangle', volume = 0.035) => {
         const c = getCtx();
-        const o = c.createOscillator(); const g = c.createGain();
-        o.type = type; o.frequency.value = freq; g.gain.value = gain;
-        o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + dur);
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+
+        osc.type = type;
+        osc.frequency.value = freq;
+
+        // мягкий fade in/out чтобы не щёлкало
+        const t = c.currentTime;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.linearRampToValueAtTime(volume, t + 0.03);
+        gain.gain.linearRampToValueAtTime(0.0001, t + duration);
+
+        osc.connect(gain);
+        gain.connect(c.destination);
+
+        osc.start();
+        osc.stop(t + duration + 0.02);
       };
-      let seqTimer = null;
+
+      // мягкие “джазовые” аккорды (очень простые, но звучат романтично)
+      const chords = [
+        [261.63, 329.63, 392.00, 493.88], // Cmaj7
+        [293.66, 349.23, 440.00, 523.25], // Dm7
+        [329.63, 392.00, 493.88, 587.33], // Em7
+        [349.23, 440.00, 523.25, 659.25], // Fmaj7
+        [392.00, 493.88, 587.33, 698.46], // G7-ish
+        [440.00, 523.25, 659.25, 783.99]  // Am7-ish
+      ];
+
       const toggleMusic = () => {
         playing = !playing;
         dom.musicBtn.style.background = playing ? 'rgba(255,77,134,.35)' : 'rgba(255,255,255,.1)';
-        if (!playing) return clearInterval(seqTimer);
-        const notes = [392, 440, 523.25, 659.25, 523.25];
+
+        if (!playing) {
+          clearInterval(interval);
+          interval = null;
+          return;
+        }
+
         let i = 0;
-        beep(523, .14, 'triangle', .07);
-        seqTimer = setInterval(() => beep(notes[i++ % notes.length], .18, 'triangle', .05), 430);
+        interval = setInterval(() => {
+          const chord = chords[i % chords.length];
+          chord.forEach((f, idx) => playNote(f, 0.7, 'triangle', 0.03 - idx*0.002));
+          i++;
+        }, 1100);
+      };
+
+      // heartbeat оставим как было
+      const beep = (freq=440, dur=.11, type='sine', gainValue=.06) => {
+        const c = getCtx();
+        const o = c.createOscillator(); const g = c.createGain();
+        o.type = type; o.frequency.value = freq; g.gain.value = gainValue;
+        o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + dur);
       };
       const playHeartbeat = () => { beep(74,.08,'sawtooth',.08); setTimeout(() => beep(62,.08,'sawtooth',.065), 140); };
       const toggleHeartbeat = () => {
@@ -604,6 +667,7 @@
         if (heartbeatEnabled) playHeartbeat();
       };
       const heartbeatIfEnabled = () => heartbeatEnabled && playHeartbeat();
+
       return { toggleMusic, toggleHeartbeat, heartbeatIfEnabled };
     })();
 
