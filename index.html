@@ -453,22 +453,23 @@
     // =========================
     // COUNTDOWN: БЛИЖАЙШИЙ 22 СЕНТЯБРЯ
     // =========================
-    const resolveCountdownTarget = () => {
-      if (CONFIG.targetDate) return new Date(CONFIG.targetDate).getTime();
+const resolveCountdownTarget = () => {
+  if (CONFIG.targetDate) return new Date(CONFIG.targetDate).getTime();
 
-      const now = new Date();
-      const year = now.getFullYear();
+  const now = new Date();
+  const year = now.getFullYear();
 
-      // 22 сентября 00:00 текущего года
-      const sep22ThisYear = new Date(year, 8, 22, 0, 0, 0, 0); // 8 = September (0-based)
+  // 22 февраля 00:00 текущего года
+  const feb22ThisYear = new Date(year, 1, 22, 0, 0, 0, 0); // 1 = February
 
-      // если уже прошло — берём следующий год
-      const target = now > sep22ThisYear
-        ? new Date(year + 1, 8, 22, 0, 0, 0, 0)
-        : sep22ThisYear;
+  // если уже прошло — берём следующий год
+  const target = now > feb22ThisYear
+    ? new Date(year + 1, 1, 22, 0, 0, 0, 0)
+    : feb22ThisYear;
 
-      return target.getTime();
-    };
+  return target.getTime();
+};
+
 
     const startCountdown = () => {
       const target = resolveCountdownTarget();
