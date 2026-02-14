@@ -242,7 +242,7 @@
         <div class="section-head reveal">
           <div>
             <div class="kicker">Countdown</div>
-            <h2 class="title">Until our next sweet date</h2>
+            <h2 class="title">Until February 22 💘</h2>
           </div>
         </div>
         <div class="countdown-wrap">
@@ -301,8 +301,7 @@
       names: { from: 'Alex', to: 'Sofia' },
       specialDate: '2025-09-22T18:27:00',
 
-      // ВАЖНО: targetDate не ставим строкой "2026-09-22...", а делаем умно:
-      // ближайший 22 сентября (если уже прошло — следующий год).
+      // оставляем null — ниже функция сама считает ближайшее 22 февраля
       targetDate: null,
 
       copy: {
@@ -451,25 +450,24 @@
     };
 
     // =========================
-    // COUNTDOWN: БЛИЖАЙШИЙ 22 СЕНТЯБРЯ
+    // COUNTDOWN: БЛИЖАЙШИЙ 22 ФЕВРАЛЯ (каждый год)
     // =========================
-const resolveCountdownTarget = () => {
-  if (CONFIG.targetDate) return new Date(CONFIG.targetDate).getTime();
+    const resolveCountdownTarget = () => {
+      if (CONFIG.targetDate) return new Date(CONFIG.targetDate).getTime();
 
-  const now = new Date();
-  const year = now.getFullYear();
+      const now = new Date();
+      const year = now.getFullYear();
 
-  // 22 февраля 00:00 текущего года
-  const feb22ThisYear = new Date(year, 1, 22, 0, 0, 0, 0); // 1 = February
+      // 22 февраля 00:00 текущего года
+      const feb22ThisYear = new Date(year, 1, 22, 0, 0, 0, 0); // 1 = February (0-based)
 
-  // если уже прошло — берём следующий год
-  const target = now > feb22ThisYear
-    ? new Date(year + 1, 1, 22, 0, 0, 0, 0)
-    : feb22ThisYear;
+      // если уже прошло — берём следующий год
+      const target = now > feb22ThisYear
+        ? new Date(year + 1, 1, 22, 0, 0, 0, 0)
+        : feb22ThisYear;
 
-  return target.getTime();
-};
-
+      return target.getTime();
+    };
 
     const startCountdown = () => {
       const target = resolveCountdownTarget();
@@ -594,7 +592,7 @@ const resolveCountdownTarget = () => {
     };
 
     // =========================
-    // MUSIC: Romantic Jazz (chords)
+    // MUSIC: Romantic Jazz (soft chords)
     // =========================
     const audio = (() => {
       let ctx = null;
@@ -612,7 +610,6 @@ const resolveCountdownTarget = () => {
         osc.type = type;
         osc.frequency.value = freq;
 
-        // мягкий fade in/out чтобы не щёлкало
         const t = c.currentTime;
         gain.gain.setValueAtTime(0.0001, t);
         gain.gain.linearRampToValueAtTime(volume, t + 0.03);
@@ -625,7 +622,6 @@ const resolveCountdownTarget = () => {
         osc.stop(t + duration + 0.02);
       };
 
-      // мягкие “джазовые” аккорды (очень простые, но звучат романтично)
       const chords = [
         [261.63, 329.63, 392.00, 493.88], // Cmaj7
         [293.66, 349.23, 440.00, 523.25], // Dm7
@@ -653,7 +649,6 @@ const resolveCountdownTarget = () => {
         }, 1100);
       };
 
-      // heartbeat оставим как было
       const beep = (freq=440, dur=.11, type='sine', gainValue=.06) => {
         const c = getCtx();
         const o = c.createOscillator(); const g = c.createGain();
